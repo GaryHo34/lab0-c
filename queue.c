@@ -26,18 +26,12 @@ void q_free(struct list_head *l)
     if (!l)
         return;
 
-    if (list_empty(l)) {
-        free(l);
-        return;
+    element_t *node, *safe;
+    list_for_each_entry_safe (node, safe, l, list) {
+        free(node->value);
+        free(node);
     }
 
-    struct list_head *ptr = l->next;
-    while (ptr != l) {
-        element_t *ele = container_of(ptr, element_t, list);
-        free(ele->value);
-        ptr = ptr->next;
-        free(ele);
-    }
     free(l);
 }
 
