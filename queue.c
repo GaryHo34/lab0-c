@@ -23,13 +23,21 @@ struct list_head *q_new()
 /* Free all storage used by queue */
 void q_free(struct list_head *l)
 {
-    struct list_head *curr;
-    curr = l;
-    while (curr != NULL) {
-        struct list_head *prev = curr;
-        curr = curr->next;
-        free(prev);
+    if (!l)
+        return;
+
+    if (list_empty(l)) {
+        free(l);
+        return;
     }
+
+    struct list_head *ptr = l->next;
+    while (ptr != l) {
+        element_t *ele = container_of(ptr, element_t, list);
+        ptr = ptr->next;
+        free(ele);
+    }
+    free(l);
 }
 
 /* Insert an element at head of queue */
