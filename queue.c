@@ -45,11 +45,12 @@ bool q_insert_head(struct list_head *head, char *s)
 {
     if (head == NULL)
         return false;
-    element_t *element = malloc(sizeof(element_t));
-    if (element == NULL)
+    element_t *ele = malloc(sizeof(element_t));
+    if (ele == NULL)
         return false;
-    strncpy(element->value, s, strlen(s));
-    list_add(&element->list, head);
+    ele->value = malloc(sizeof(char) * strlen(s) + 1);
+    strncpy(ele->value, s, strlen(s) + 1);
+    list_add(&ele->list, head);
     return true;
 }
 
