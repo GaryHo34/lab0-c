@@ -34,6 +34,7 @@ void q_free(struct list_head *l)
     struct list_head *ptr = l->next;
     while (ptr != l) {
         element_t *ele = container_of(ptr, element_t, list);
+        free(ele->value);
         ptr = ptr->next;
         free(ele);
     }
