@@ -70,31 +70,38 @@ bool q_insert_tail(struct list_head *head, char *s)
     return true;
 }
 
+element_t *q_remove(struct list_head *head, char *sp, size_t bufsize, int mode)
+{
+    element_t *ele = NULL;
+
+    if (head && !list_empty(head)) {
+        if (mode == 0) {
+            ele = list_first_entry(head, element_t, list);
+        } else {
+            ele = list_last_entry(head, element_t, list);
+        }
+        if (sp && ele->value) {
+            strncpy(sp, ele->value, bufsize - 1);
+            sp[bufsize - 1] = '\0';
+        }
+        list_del(&ele->list);
+    }
+
+    return ele;
+}
+
 /* Remove an element from head of queue */
 element_t *q_remove_head(struct list_head *head, char *sp, size_t bufsize)
 {
-    if (!head || list_empty(head))
-        return NULL;
-    element_t *ele = list_first_entry(head, element_t, list);
-    if (sp && ele->value) {
-        strncpy(sp, ele->value, bufsize - 1);
-    }
-    list_del(&ele->list);
-    return ele;
+    return q_remove(head, sp, bufsize, 0);
 }
 
 /* Remove an element from tail of queue */
 element_t *q_remove_tail(struct list_head *head, char *sp, size_t bufsize)
 {
-    if (!head || list_empty(head))
-        return NULL;
-    element_t *ele = list_last_entry(head, element_t, list);
-    if (sp && ele->value) {
-        strncpy(sp, ele->value, bufsize - 1);
-    }
-    list_del(&ele->list);
-    return ele;
+    return q_remove(head, sp, bufsize, 1);
 }
+
 
 /* Return number of elements in queue */
 int q_size(struct list_head *head)
