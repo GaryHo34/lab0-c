@@ -1,8 +1,8 @@
+#include "queue.h"
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-#include "queue.h"
 
 /* Notice: sometimes, Cppcheck would find the potential NULL pointer bugs,
  * but some of them cannot occur. You can suppress them by adding the
@@ -137,16 +137,17 @@ bool q_delete_dup(struct list_head *head)
     // https://leetcode.com/problems/remove-duplicates-from-sorted-list-ii/
     if (!head || list_empty(head))
         return false;
-    element_t *node, *safe;
-    list_for_each_entry_safe (node, safe, head, list) {
-        bool match =
-            node->list.next != head &&
-            strcmp(node->value,
-                   list_entry(node->list.next, element_t, list)->value);
-        if (match) {
-            list_del(&node->list);
-            q_release_element(node);
+    struct list_head *node, *safe;
+    bool dup = false;
+    list_for_each_safe (node, safe, head) {
+        bool match = safe != head &&
+                     !strcmp(list_entry(node, element_t, list)->value,
+                             list_entry(node->next, element_t, list)->value);
+        if (match || dup) {
+            list_del(node);
+            q_release_element(list_entry(node, element_t, list));
         }
+        dup = match;
     }
     return true;
 }
@@ -217,56 +218,68 @@ void q_reverseK(struct list_head *head, int k)
     q_reverseK_help(head, head, k);
     return;
 }
-void merge(int left, int mid, int right, struct list_head **list)
+struct list_head *merge(struct list_head *left, struct list_head *right)
 {
-    struct list_head *merge_list[200000];
+    struct list_head *head = NULL, **ptr = &head, **node;
 
-    int i = left, j = mid + 1, k = 0;
-    while (i <= mid && j <= right) {
-        if (strcmp(list_entry(list[i], element_t, list)->value,
-                   list_entry(list[j], element_t, list)->value) > 0)
-            merge_list[k++] = list[i++];
-        else
-            merge_list[k++] = list[j++];
+    while (left && right) {
+        if (strcmp(list_entry(left, element_t, list)->value,
+                   list_entry(right, element_t, list)->value) > 0) {
+            node = &right;
+        } else {
+            node = &left;
+        }
+        *ptr = *node;
+        *node = (*node)->next;
+        ptr = &(*ptr)->next;
     }
-    while (i <= mid)
-        merge_list[k++] = list[i++];
-    while (j <= right)
-        merge_list[k++] = list[j++];
-    for (int x = 0; x < k; x++) {
-        list[left + x] = merge_list[x];
-    }
-    return;
+    // because in the end, one of left or right is NULL;
+    *ptr = (struct list_head *) ((uintptr_t) left | (uintptr_t) right);
+    return head;
 }
 
-void merge_sort(int left, int right, struct list_head **list)
+struct list_head *merge_sort(struct list_head *start)
 {
-    if (left == right)
-        return;
-    int mid = left + (right - left) / 2;
-    merge_sort(left, mid, list);
-    merge_sort(mid + 1, right, list);
-    merge(left, mid, right, list);
-    return;
+    if (!start->next)
+        return start;
+    struct list_head *head, *fast, *slow, *left, *right;
+    fast = slow = start;
+    while (fast && fast->next) {
+        slow = slow->next;
+        fast = fast->next->next;
+    }
+    slow->prev->next = NULL;
+    slow->prev = NULL;
+
+    left = merge_sort(start);
+    right = merge_sort(slow);
+    head = merge(left, right);
+    return head;
 }
 
 /* Sort elements of queue in ascending order */
 void q_sort(struct list_head *head)
 {
-    if (!head || list_empty(head))
+    if (!head || list_empty(head) || list_is_singular(head))
         return;
-    int n = q_size(head);
-    struct list_head *ptr_list[200000];
-    struct list_head *node, *safe;
-    int i = 0;
-    list_for_each_safe (node, safe, head) {
-        list_del_init(node);
-        ptr_list[i++] = node;
+
+    // break the linked list circle
+    head->prev->next = NULL;
+    head->prev = NULL;
+
+    head->next = merge_sort(head->next);
+
+    // after sort, only next is valid, re link the prev pointer
+    struct list_head *curr = head;
+    while (curr->next) {
+        struct list_head *prev = curr;
+        curr = curr->next;
+        curr->prev = prev;
     }
-    merge_sort(0, n - 1, ptr_list);
-    for (i = 0; i < n; i++) {
-        list_add(ptr_list[i], head);
-    }
+
+    // circulate the linked list
+    head->prev = curr;
+    curr->next = head;
     return;
 }
 
@@ -280,11 +293,15 @@ int q_descend(struct list_head *head)
     q_reverse(head);
     struct list_head *node, *safe, *max = head->next;
     list_for_each_safe (node, safe, head) {
+        if (node == head->next)
+            continue;
         if (strcmp(list_entry(node, element_t, list)->value,
-                   list_entry(max, element_t, list)->value) > 0)
+                   list_entry(max, element_t, list)->value) > 0) {
             max = node;
-        else
+        } else {
             list_del(node);
+            q_release_element(list_entry(node, element_t, list));
+        }
     }
     q_reverse(head);
     return q_size(head);
