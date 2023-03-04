@@ -62,11 +62,19 @@ static void differentiate(int64_t *exec_times,
 {
     for (size_t i = 0; i < N_MEASURES; i++)
         exec_times[i] = after_ticks[i] - before_ticks[i];
+    // only 150 data point, forgive me for using bubble sort lol
+    for (size_t i = 0; i < N_MEASURES; i++)
+        for (size_t j = 0; j < N_MEASURES; j++)
+            if (exec_times[i] > exec_times[j]) {
+                int tmp = exec_times[i];
+                exec_times[i] = exec_times[j];
+                exec_times[j] = tmp;
+            }
 }
 
 static void update_statistics(const int64_t *exec_times, uint8_t *classes)
 {
-    for (size_t i = 0; i < N_MEASURES; i++) {
+    for (size_t i = DROP_SIZE / 2; i < N_MEASURES - DROP_SIZE / 2; i++) {
         int64_t difference = exec_times[i];
         /* CPU cycle counter overflowed or dropped measurement */
         if (difference <= 0)
@@ -170,8 +178,11 @@ static bool test_const(char *text, int mode)
     return result;
 }
 
-#define DUT_FUNC_IMPL(op) \
-    bool is_##op##_const(void) { return test_const(#op, DUT(op)); }
+#define DUT_FUNC_IMPL(op)                \
+    bool is_##op##_const(void)           \
+    {                                    \
+        return test_const(#op, DUT(op)); \
+    }
 
 #define _(x) DUT_FUNC_IMPL(x)
 DUT_FUNCS
