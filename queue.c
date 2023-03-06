@@ -184,15 +184,13 @@ void q_reverse(struct list_head *head)
 
 /* Reverse the nodes of the list k at a time */
 
-void reverse(struct list_head *first, struct list_head *last, int k)
+void reverse(struct list_head *first, int k)
 {
     struct list_head *node, *safe;
-    int t = 0;
     list_for_each_safe (node, safe, first) {
-        if (t == k)
+        if (!k--)
             return;
         list_move(node, first);
-        t++;
     }
 }
 
@@ -206,7 +204,7 @@ void q_reverseK_help(struct list_head *head, struct list_head *first, int k)
             return;
     }
     struct list_head *tmp = curr->next;
-    reverse(first, curr, k);
+    reverse(first, k);
     q_reverseK_help(head, tmp->prev, k);
 }
 
@@ -218,6 +216,7 @@ void q_reverseK(struct list_head *head, int k)
     q_reverseK_help(head, head, k);
     return;
 }
+
 struct list_head *merge(struct list_head *left, struct list_head *right)
 {
     struct list_head *head = NULL, **ptr = &head, **node;
