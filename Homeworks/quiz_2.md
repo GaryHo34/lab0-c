@@ -105,6 +105,7 @@ int concatenated_binary_built_in(int n)
 
 We can see, swar_count_utf8 is way faster than count_utf8
 
+```
 Samples: 2K of event 'cycles'
 Event count (approx.): 81152180673
 Overhead  Command  Shared Object      Symbol
@@ -124,7 +125,7 @@ Overhead  Command  Shared Object      Symbol
      0.04%  me       [kernel.kallsyms]  [k] llist_add_batch
      0.00%  me       [kernel.kallsyms]  [k] native_sched_clock
      0.00%  me       [kernel.kallsyms]  [k] native_write_msr
-  
+```
 
 ```
 size_t count_utf8(const char *buf, size_t len)
