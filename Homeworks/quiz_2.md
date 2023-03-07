@@ -13,6 +13,98 @@ Consider or operation and the example, we can conclude that
 next_pow2 will try to turn every bit below the highest 1 bit
 into 1.
 
+```
+ or  0   1
+ 0   0   1
+ 1   1   1
+
+ ex x=6, 110 | 10 | 1 -> 111
+
+uint64_t next_pow2(uint64_t x)
+{
+    /*Here we deals with 8 bits together*/
+    x |= x >> 1;
+    x |= x >> 1;
+    x |= x >> 1;
+    x |= x >> 1;
+    x |= x >> 1;
+    x |= x >> 1;
+    x |= x >> 1;
+
+    /* since we have 64 bits, we don't need to repeat 64 times.
+     * just shift 8 bits to copy the group from 8th to 15th bits
+     * and so on.
+     */
+    x |= x >> 8;
+    x |= x >> 16;
+    x |= x >> 32;
+
+    /*Now all the bits will be 1, add 1 will get our result!*/
+    return x + 1;
+}
+
+uint64_t next_pow2_built_in(uint64_t x)
+{
+    int pow = 63 - __builtin_clzl(x) + 1;
+    return ((uint64_t) 1) << pow;
+}
+```
+
+## Question 2
+
+When Concat 2 binary using or operation, we have to consider
+how many space we have to keep for next number. For example,
+to concat 2 afer 1, 2 is 10 in binary form, so we have to shift
+2 bits for 1 to make a room for 10.
+
+```
+int concatenatedBinary(int n)
+{
+    const int M = 1e9 + 7;
+    int len = 0; /* the bit length to be shifted */
+    /* use long here as it potentially could overflow for int */
+    long ans = 0;
+    for (int i = 1; i <= n; i++) {
+        /* removing the rightmost set bit
+         * e.g. 100100 -> 100000
+         *      000001 -> 000000
+         *      000000 -> 000000
+         * after removal, if it is 0, then it means it is power of 2
+         * as all power of 2 only contains 1 set bit
+         * if it is power of 2, we increase the bit length
+         */
+        if (!(i & i - 1))
+            len++;
+        ans = (i | (ans << len)) % M;
+    }
+    return ans;
+}
+
+int concatenated_binary_built_in(int n)
+{
+    const int M = 1e9 + 7;
+    int len = 0; /* the bit length to be shifted */
+    /* use long here as it potentially could overflow for int */
+    long ans = 0;
+    for (int i = 1; i <= n; i++) {
+        /* removing the rightmost set bit
+         * e.g. 100100 -> 100000
+         *      000001 -> 000000
+         *      000000 -> 000000
+         * after removal, if it is 0, then it means it is power of 2
+         * as all power of 2 only contains 1 set bit
+         * if it is power of 2, we increase the bit length
+         */
+        ans = (i | (ans << (64 - __builtin_clzl(i)))) % M;
+    }
+    return ans;
+}
+```
+
+## Question 3 
+
+We can see, swar_count_utf8 is way faster than count_utf8
+
 Samples: 2K of event 'cycles'
 Event count (approx.): 81152180673
 Overhead  Command  Shared Object      Symbol
