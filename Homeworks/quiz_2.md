@@ -174,5 +174,3 @@ bool is_pattern(uint16_t x)
     return (n ^ x) < x;
 }
 ```
-
-j
